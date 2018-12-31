@@ -5,10 +5,23 @@
 #include <stdlib.h>
 #include <time.h>
 #include <random>
+#include <signal.h>
 
 struct param{
     bool draw_screen = TRUE;
+    int fps = 8;
+    int step = 0;
+    int width, height;
+
+    param() {getmaxyx(stdscr, height, width);}
 };
+
+void resize(param& par){
+    clear();
+    getmaxyx(stdscr,par.height, par.width);
+    par.step = 0;
+}
+
 
 void clear_box(WINDOW* win, int height, int width, int y0, int x0){
     attron(COLOR_PAIR(-1));
@@ -104,19 +117,21 @@ int main(){
  
     param par;
 
-    int width, height, fps;
-    fps = 8;
-    getmaxyx(stdscr, height, width);
-    WINDOW* win = newwin(height, width, 0, 0);
-    //clear_box(win, height, width, 0,0);
+    WINDOW* win = newwin(par.height, par.width, 0, 0);
+    //clear_box(win, par.height, par.width, 0,0);
 
-    int i = 0;
-    int xloc = 0;
+    int temp_width, temp_height;
+    sighandler_t signal_check = 0;
     while(par.draw_screen){
         handle_keys(par);
-        firework_cone(win, height,width/2,1,height,width,i);
-        usleep(1000000/fps);
-        ++i;
+        firework_cone(win, par.height,par.width/2,1,par.height,
+                      par.width,par.step);
+        usleep(1000000/par.fps);
+        getmaxyx(stdscr, temp_height, temp_width);
+        if (temp_height != par.height || temp_width != par.width){
+            resize(par);
+        }
+        ++par.step;
     }
 
     endwin();

@@ -10,9 +10,8 @@ struct param{
     bool draw_screen = TRUE;
 };
 
-void clear_box(WINDOW* win, int height, int width, int y0, int x0, int color){
-    init_pair(1, color, color);
-    attron(COLOR_PAIR(1));
+void clear_box(WINDOW* win, int height, int width, int y0, int x0){
+    attron(COLOR_PAIR(-1));
     for (int i = 0; i < width; ++i){
         int xpos = x0 + i;
         for (int j = 0; j < height; ++j){
@@ -22,7 +21,7 @@ void clear_box(WINDOW* win, int height, int width, int y0, int x0, int color){
     }
     wrefresh(win);
 
-    //attroff(COLOR_PAIR(1));
+    attroff(COLOR_PAIR(-1));
 }
 
 // width will be constrained to an odd number
@@ -43,12 +42,15 @@ void firework_cone(WINDOW* win, int y0, int x0, int priority, int height,
     for (int i = 0; i < cone_width; ++i){
         int xpos = x0 - (cone_width/2) + i;
         bool draw = (rand() % 2) == 1;
+        int color_choice = (rand() % 8) + 1;
         if (draw){
+            wattron(win, COLOR_PAIR(color_choice));
             mvwaddch(win, ypos, xpos, '*');
+            wattroff(win, COLOR_PAIR(color_choice));
         }
     }
-
     wrefresh(win);
+
 }
 
 void handle_keys(param& par){
@@ -79,6 +81,17 @@ void init_curses(){
     // Starting color values
     start_color();
 
+    init_pair(1, 0, 0);
+    init_pair(2, 1, 0);
+    init_pair(3, 2, 0);
+    init_pair(4, 3, 0);
+    init_pair(5, 4, 0);
+    init_pair(6, 5, 0);
+    init_pair(7, 6, 0);
+    init_pair(8, 7, 0);
+
+    use_default_colors();
+
     clear();
 
     srand(time(NULL));
@@ -95,7 +108,7 @@ int main(){
     fps = 8;
     getmaxyx(stdscr, height, width);
     WINDOW* win = newwin(height, width, 0, 0);
-    clear_box(win, height, width, 0,0,COLOR_BLACK);
+    //clear_box(win, height, width, 0,0);
 
     int i = 0;
     int xloc = 0;

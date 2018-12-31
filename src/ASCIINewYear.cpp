@@ -37,9 +37,33 @@ void clear_box(WINDOW* win, int height, int width, int y0, int x0){
     attroff(COLOR_PAIR(-1));
 }
 
+void firework_rain(WINDOW* win, int y0, int x0, int priority, int height, 
+                   int width, int timestep){
+    wclear(win);
+
+    if (width % 2 != 0){
+        width += 1;
+    }
+
+    if (timestep > height){
+        int radius = timestep - height;
+    }
+    else{
+        mvwaddch(win, y0-timestep, x0, '*');
+        if (timestep > 0){
+            mvwaddch(win, y0-timestep+1, x0, '|');
+        }
+        if (timestep > 1){
+            mvwaddch(win, y0-timestep+2, x0, '|');
+        }
+    }
+
+}
+
 // width will be constrained to an odd number
 void firework_cone(WINDOW* win, int y0, int x0, int priority, int height,
                    int width, int timestep){
+    wclear(win);
     if (timestep > height){
         return;
     }
@@ -49,20 +73,20 @@ void firework_cone(WINDOW* win, int y0, int x0, int priority, int height,
     }
 
     // Define the spaces we can draw on
-    int ypos = y0 - timestep;
-
-    double cone_width = (double)(width*0.5)/(height)*2.0*timestep;
-    for (int i = 0; i < cone_width; ++i){
-        int xpos = x0 - (cone_width/2) + i;
-        bool draw = (rand() % 2) == 1;
-        int color_choice = (rand() % 8) + 1;
-        if (draw){
-            wattron(win, COLOR_PAIR(color_choice));
-            mvwaddch(win, ypos, xpos, '*');
-            wattroff(win, COLOR_PAIR(color_choice));
+    for (int j = 0; j < timestep; ++j){
+        double cone_width = (double)(width*0.5)/(height)*2.0*j;
+        int ypos = y0 - j;
+        for (int i = 0; i < cone_width; ++i){
+            int xpos = x0 - (cone_width/2) + i;
+            bool draw = (rand() % 2) == 1;
+            int color_choice = (rand() % 2) ? 4:8;
+            if (draw){
+                wattron(win, COLOR_PAIR(color_choice));
+                mvwaddch(win, ypos, xpos, '*');
+                wattroff(win, COLOR_PAIR(color_choice));
+            }
         }
     }
-    wrefresh(win);
 
 }
 
@@ -94,6 +118,10 @@ void init_curses(){
     // Starting color values
     start_color();
 
+    // Making cursor invisible
+    curs_set(0);
+
+    // Creating initial color pairs with black bg.
     init_pair(1, 0, 0);
     init_pair(2, 1, 0);
     init_pair(3, 2, 0);
@@ -103,6 +131,7 @@ void init_curses(){
     init_pair(7, 6, 0);
     init_pair(8, 7, 0);
 
+    // Setting colors to be defined by ncurses instead terminal default
     use_default_colors();
 
     clear();
@@ -121,16 +150,18 @@ int main(){
     //clear_box(win, par.height, par.width, 0,0);
 
     int temp_width, temp_height;
-    sighandler_t signal_check = 0;
     while(par.draw_screen){
         handle_keys(par);
-        firework_cone(win, par.height,par.width/2,1,par.height,
-                      par.width,par.step);
+        //firework_rain(win, par.height,par.width/2,1,par.height,
+        //              par.width,par.step);
+        firework_cone(win, par.height,par.width/2,1,par.height/2,
+                      par.width/2,par.step);
         usleep(1000000/par.fps);
         getmaxyx(stdscr, temp_height, temp_width);
         if (temp_height != par.height || temp_width != par.width){
             resize(par);
         }
+        wrefresh(win);
         ++par.step;
     }
 
